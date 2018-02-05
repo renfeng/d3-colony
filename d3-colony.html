@@ -107,7 +107,7 @@
 				})
 
 				self.groups = nodes.reduce(function(groups, node) {
-					var group = node.mgroup || 'none';
+					var group = node.mgroup || 0;
 					var index = groups.indexOf(group);
 
 					if (index === -1) {
