@@ -72,20 +72,8 @@
 			static get observers() {
 				return [
 					"colonyObserver(links, nodes, scale, colors)",
+					"refresh(width, height)",
 				];
-			}
-
-			ready() {
-				super.ready();
-				var self = this;
-
-				/*
-				 * Add event handler for window resize
-				 * https://github.com/Polymer/polymer/issues/1384
-				 */
-				window.addEventListener("resize", function() {
-					self.refresh();
-				});
 			}
 
 			colonyObserver(links, nodes, scale, colors) {
@@ -108,8 +96,7 @@
 
 				var groups = nodes.reduce(function(groups, node) {
 					var group = node.group || 0;
-					var index = groups.indexOf(group);
-					if (index === -1) {
+					if (groups.indexOf(group) == -1) {
 						groups.push(group);
 					}
 					return groups;
@@ -131,7 +118,7 @@
 				//	.interpolate(d3.interpolateHsl);
 
 				self.colorLookup = groups.reduce(function(colorLookup, group, n) {
-					var color = d3.hsl(n / groups.length * 180, 0.7, 0.725);
+					var color = d3.hsl(n / groups.length * 120, 0.7, 0.725);
 					colorLookup[group] = color.toString();
 					//colorLookup[group] = color(n).toString();
 					return colorLookup;
@@ -251,11 +238,7 @@
 				//	.attr('dx', function(d) { return d[1] })
 				//	.attr('text-anchor', 'middle');
 
-				self.refresh();
-
 				self.selectedObserver(self.selected, undefined);
-
-				//self.restartForce();
 			}
 
 			selectedObserver(newValue, oldValue) {
@@ -337,35 +320,32 @@
 				//});
 
 				self.node.style('opacity', function(o) {
-					o.active = self.connected(d, o)
-					return o.active ? 1 : 0.2
+					o.active = self.connected(d, o);
+					return o.active ? 1 : 0.2;
 				});
 
 				self.force.charge(function(o) {
-					return (o.active ? -100 : -5) * self.scale
+					return (o.active ? -100 : -5) * self.scale;
 				}).linkDistance(function(l) {
-					return (l.source.active && l.target.active ? 100 : 20) * self.scale
+					return (l.source.active && l.target.active ? 100 : 20) * self.scale;
 				}).linkStrength(function(l) {
-					return (l.source === d || l.target === d ? 1 : 0) * self.scale
+					return (l.source === d || l.target === d ? 1 : 0) * self.scale;
 				}).start();
 
 				self.link.style('opacity', function(l, i) {
-					return l.source.active && l.target.active ? 0.2 : 0.02
+					return l.source.active && l.target.active ? 0.2 : 0.02;
 				});
 			}
 
-			refresh() {
-				var self = this;
+			refresh(width, height) {
+				if (!this.loaded) {
+					return;
+				}
 
-				self.width = Math.max(window.innerWidth * 0.5, 500);
-				//self.width = window.innerWidth;
-				self.height = window.innerHeight;
-
-				self.force.size([self.width, self.height])
+				this.force.size([width, height])
 					.resume();
-
-				self.vis.attr('width', window.innerWidth)
-					.attr('height', self.height);
+				this.vis.attr('width', width)
+					.attr('height', height);
 			};
 
 			childNodes(d) {
@@ -395,18 +375,13 @@
 			};
 
 			connected(d, o) {
-				return o.index === d.index ||
-					(d.children && d.children.indexOf(o.index) !== -1) ||
-					(o.children && o.children.indexOf(d.index) !== -1) ||
-					(o.parents && o.parents.indexOf(d.index) !== -1) ||
-					(d.parents && d.parents.indexOf(o.index) !== -1)
-			};
-
-			restartForce() {
-				var theta = self.force.theta();
-
-				self.force.start()
-					 .theta(theta);
+				var oIndex = this.nodes.indexOf(o);
+				var dIndex = this.nodes.indexOf(d);
+				return oIndex === dIndex ||
+					(d.children && d.children.indexOf(oIndex) !== -1) ||
+					(o.children && o.children.indexOf(dIndex) !== -1) ||
+					(o.parents && o.parents.indexOf(dIndex) !== -1) ||
+					(d.parents && d.parents.indexOf(oIndex) !== -1)
 			};
 		}
 
