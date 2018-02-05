@@ -169,7 +169,7 @@
 					.attr('y2', function(d) { return d.target.y; })
 					.style('stroke', colors.links)
 					.style('opacity', function(d) {
-						return d.target.module ? 0.2 : 0.3
+						return d.target.module ? 0.2 : 0.3;
 					});
 
 				self.node.enter()
@@ -186,7 +186,7 @@
 						//textTarget = d
 						//
 						//text.attr('transform', 'translate(' + d.x + ',' + d.y + ')')
-						//	.text(d.id)
+						//	.text(d.name)
 						//	.style('display', null)
 
 						d3.select(this)
@@ -280,10 +280,10 @@
 
 					self.node.style('opacity', 1)
 					self.link.style('opacity', function(d) {
-						return d.target.module ? 0.2 : 0.3
+						return d.target.module ? 0.2 : 0.3;
 					});
 
-					console.log("blur: " + d.id);
+					console.log("blur: " + d.name);
 					if (!internal) {
 						self.setProperties({
 							selected: undefined,
@@ -299,10 +299,10 @@
 					return;
 				}
 
-				console.log("focus: " + d.id);
+				console.log("focus: " + d.name);
 				if (!internal) {
 					self.setProperties({
-						selected: d.id,
+						selected: d.name,
 						internal: true,
 					});
 				}
