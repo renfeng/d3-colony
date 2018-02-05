@@ -1,0 +1,408 @@
+<link rel="import" href="../paper-toast/paper-toast.html"/>
+<link rel="import" href="import-d3.html"/>
+
+<dom-module id="d3-colony">
+	<template>
+		<style>
+			#root {
+				background-color: #252929;
+			}
+		</style>
+		<div id="root"></div>
+		<paper-toast id="msgNotFound" text="Not found!"></paper-toast>
+	</template>
+	<script>
+		class D3Colony extends Polymer.Element {
+			static get is() { return "d3-colony"; }
+
+			static get properties() {
+				return {
+					nodes: {
+						type: Array,
+						value: function() { return []; },
+					},
+					links: {
+						type: Array,
+						value: function() { return []; },
+					},
+					scale: {
+						type: Number,
+						value: 1,
+					},
+					width: {
+						type: Number,
+						value: 600,
+					},
+					height: {
+						type: Number,
+						value: 400,
+					},
+					colors: {
+						type: Object,
+						value: function() {
+							var self = this;
+
+							return {
+								links: '#FAFAFA',
+								text: {
+									subtitle: '#FAFAFA',
+								},
+								nodes: {
+									method: function(d) {
+										return self.groups[d.group].color;
+									},
+									hover: '#FAFAFA',
+									dep: '#252929',
+								},
+							};
+						},
+					},
+					selected: {
+						type: String,
+						notify: true,
+						observer: "selectedObserver",
+					},
+					loaded: {
+						type: Boolean,
+						value: false,
+					}
+				};
+			}
+
+			static get observers() {
+				return [
+					"colonyObserver(links, nodes, scale, colors)",
+				];
+			}
+
+			ready() {
+				super.ready();
+				var self = this;
+
+				/*
+				 * Add event handler for window resize
+				 * https://github.com/Polymer/polymer/issues/1384
+				 */
+				window.addEventListener("resize", function() {
+					self.refresh();
+				});
+			}
+
+			colonyObserver(links, nodes, scale, colors) {
+				var self = this;
+
+				if (!self.loaded) {
+					return;
+				}
+
+				links.forEach(function(link) {
+					var source = nodes[link.source];
+					var target = nodes[link.target];
+
+					source.children = source.children || [];
+					source.children.push(link.target);
+
+					target.parents = target.parents || [];
+					target.parents.push(link.source);
+				})
+
+				self.groups = nodes.reduce(function(groups, node) {
+					var group = node.mgroup || 'none';
+					var index = groups.indexOf(group);
+
+					if (index === -1) {
+						index = groups.length;
+						groups.push(group);
+					}
+
+					node.group = index;
+
+					return groups;
+				}, []);
+
+				self.groups = self.groups.map(function(name, n) {
+					//var color = d3.hsl(n / self.groups.length * 300, 0.7, 0.725);
+					var color = d3.hsl(300 - name / self.groups.length * 300, 0.7, 0.725);
+
+					return {
+						name: name,
+						color: color.toString(),
+					};
+				});
+
+				self.force = d3.layout.force()
+					.size([self.width, self.height])
+					.charge(-50 * self.scale)
+					.linkDistance(20 * self.scale)
+					.on('tick', function() {
+						self.link.attr('x1', function(d) { return d.source.x; })
+							.attr('y1', function(d) { return d.source.y; })
+							.attr('x2', function(d) { return d.target.x; })
+							.attr('y2', function(d) { return d.target.y; })
+
+						self.node.attr('cx', function(d) { return d.x; })
+							.attr('cy', function(d) { return d.y; })
+
+						//if (textTarget) {
+						//	text.attr('transform'
+						//			, 'translate(' + textTarget.x + ',' + textTarget.y + ')')
+						//}
+					});
+
+				/*
+				 * https://stackoverflow.com/questions/10784018/how-can-i-remove-or-replace-svg-content
+				 */
+				self.vis = d3.select(self.$.root).select("svg").remove();
+				self.vis = d3.select(self.$.root)
+					.append('svg')
+					.attr('width', self.width)
+					.attr('height', self.height);
+
+				self.force.nodes(nodes)
+					 .links(links)
+					 .start();
+
+				self.link = self.vis.selectAll('line.link').data(links);
+				self.node = self.vis.selectAll('circle.node')
+					.data(nodes, function(d) { return d.filename });
+
+				self.link.enter()
+					.insert('line', '.node')
+					.attr('class', 'link')
+					.attr('x1', function(d) { return d.source.x; })
+					.attr('y1', function(d) { return d.source.y; })
+					.attr('x2', function(d) { return d.target.x; })
+					.attr('y2', function(d) { return d.target.y; })
+					.style('stroke', colors.links)
+					.style('opacity', function(d) {
+						return d.target.module ? 0.2 : 0.3
+					});
+
+				self.node.enter()
+					.append('circle')
+					.attr('class', 'node')
+					.attr('cx', function(d) { return d.x })
+					.attr('cy', function(d) { return d.y })
+					.attr('r', function(d) {
+						return scale * d.size;
+					})
+					.style('fill', colors.nodes.method)
+					.call(self.force.drag)
+					.on('mouseover', function(d) {
+						//textTarget = d
+						//
+						//text.attr('transform', 'translate(' + d.x + ',' + d.y + ')')
+						//	.text(d.id)
+						//	.style('display', null)
+
+						d3.select(this)
+						  .style('fill', colors.nodes.hover)
+
+						d3.selectAll(self.childNodes(d))
+							.style('fill', colors.nodes.hover)
+							.style('stroke', colors.nodes.method)
+							.style('stroke-width', 2)
+
+						d3.selectAll(self.parentNodes(d))
+							.style('fill', colors.nodes.dep)
+							.style('stroke', colors.nodes.method)
+							.style('stroke-width', 2)
+					})
+					.on('mouseout', function(d) {
+						//textTarget = false
+						//
+						//text.style('display', 'none')
+
+						d3.select(this)
+						  .style('fill', colors.nodes.method)
+
+						d3.selectAll(self.childNodes(d))
+							.style('fill', colors.nodes.method)
+							.style('stroke', null)
+
+						d3.selectAll(self.parentNodes(d))
+							.style('fill', colors.nodes.method)
+							.style('stroke', null)
+					})
+					.on('click', function(d) {
+						self.toggleFocus(d, false);
+					});
+
+				//text = self.vis.selectAll('.nodetext')
+				//	.data([
+				//		  [-1.5,  1.5,  1] // "Shadows"
+				//		, [ 1.5,  1.5,  1]
+				//		, [-1.5, -1.5,  1]
+				//		, [ 1.5, -1.5,  1]
+				//		, [ 0.0,  0.0,  0] // Actual Text
+				//	])
+				//	.enter()
+				//	.insert('text', ':last-child')
+				//	.attr('class', 'nodetext')
+				//	.classed('shadow', function(d) { return d[2] })
+				//	.attr('dy', function(d) { return d[0] - 10 })
+				//	.attr('dx', function(d) { return d[1] })
+				//	.attr('text-anchor', 'middle');
+
+				self.refresh();
+
+				self.selectedObserver(self.selected, undefined);
+
+				//self.restartForce();
+			}
+
+			selectedObserver(newValue, oldValue) {
+				var self = this;
+
+				if (!self.loaded) {
+					return;
+				}
+				if (self.internal) {
+					self.internal = false;
+					return;
+				}
+
+				if (oldValue) {
+					var node = self.nodeLookup[oldValue];
+					if (node) {
+						self.toggleFocus(node, true);
+					}
+				}
+
+				if (newValue) {
+					var node = self.nodeLookup[newValue];
+					if (node) {
+						self.toggleFocus(node, true);
+					} else {
+						self.$.msgNotFound.open();
+					}
+				}
+			}
+
+			toggleFocus(d, internal) {
+				var self = this;
+
+				if (self.focus === d) {
+					self.force.charge(-50 * self.scale)
+						 .linkDistance(20 * self.scale)
+						 .linkStrength(1)
+						 .start();
+
+					self.node.style('opacity', 1)
+					self.link.style('opacity', function(d) {
+						return d.target.module ? 0.2 : 0.3
+					});
+
+					console.log("blur: " + d.id);
+					if (!internal) {
+						self.setProperties({
+							selected: undefined,
+							internal: true,
+						});
+					}
+					self.focus = undefined;
+
+					//d3.select('#readme-contents')
+					//	.html(readme)
+					//	.classed('showing-code', false);
+
+					return;
+				}
+
+				console.log("focus: " + d.id);
+				if (!internal) {
+					self.setProperties({
+						selected: d.id,
+						internal: true,
+					});
+				}
+				self.focus = d;
+
+				//d3.xhr('./files/' + d.filename + '.html', function(res) {
+				//	if (!res) return
+				//
+				//	d3.select('#readme-contents')
+				//		.html(res.responseText)
+				//		.classed('showing-code', true)
+				//
+				//	document.getElementById('readme')
+				//			.scrollTop = 0
+				//});
+
+				self.node.style('opacity', function(o) {
+					o.active = self.connected(d, o)
+					return o.active ? 1 : 0.2
+				});
+
+				self.force.charge(function(o) {
+					return (o.active ? -100 : -5) * self.scale
+				}).linkDistance(function(l) {
+					return (l.source.active && l.target.active ? 100 : 20) * self.scale
+				}).linkStrength(function(l) {
+					return (l.source === d || l.target === d ? 1 : 0) * self.scale
+				}).start();
+
+				self.link.style('opacity', function(l, i) {
+					return l.source.active && l.target.active ? 0.2 : 0.02
+				});
+			}
+
+			refresh() {
+				var self = this;
+
+				self.width = Math.max(window.innerWidth * 0.5, 500);
+				//self.width = window.innerWidth;
+				self.height = window.innerHeight;
+
+				self.force.size([self.width, self.height])
+					.resume();
+
+				self.vis.attr('width', window.innerWidth)
+					.attr('height', self.height);
+			};
+
+			childNodes(d) {
+				if (!d.children) return [];
+
+				var self = this;
+
+				return d.children
+					.map(function(child) {
+						return self.node[0][child];
+					}).filter(function(child) {
+						return child;
+					})
+			};
+
+			parentNodes(d) {
+				if (!d.parents) return []
+
+				var self = this;
+
+				return d.parents
+					.map(function(parent) {
+						return self.node[0][parent];
+					}).filter(function(parent) {
+						return parent;
+					})
+			};
+
+			connected(d, o) {
+				return o.index === d.index ||
+					(d.children && d.children.indexOf(o.index) !== -1) ||
+					(o.children && o.children.indexOf(d.index) !== -1) ||
+					(o.parents && o.parents.indexOf(d.index) !== -1) ||
+					(d.parents && d.parents.indexOf(o.index) !== -1)
+			};
+
+			restartForce() {
+				var theta = self.force.theta();
+
+				self.force.start()
+					 .theta(theta);
+			};
+		}
+
+		window.customElements.define(D3Colony.is, D3Colony);
+	</script>
+</dom-module>
