@@ -49,7 +49,7 @@
 								},
 								nodes: {
 									method: function(d) {
-										return self.groups[d.group].color;
+										return self.colorLookup[d.group];
 									},
 									hover: '#FAFAFA',
 									dep: '#252929',
@@ -106,29 +106,36 @@
 					target.parents.push(link.source);
 				})
 
-				self.groups = nodes.reduce(function(groups, node) {
-					var group = node.mgroup || 0;
+				var groups = nodes.reduce(function(groups, node) {
+					var group = node.group || 0;
 					var index = groups.indexOf(group);
-
 					if (index === -1) {
-						index = groups.length;
 						groups.push(group);
 					}
-
-					node.group = index;
-
 					return groups;
 				}, []);
 
-				self.groups = self.groups.map(function(name, n) {
-					//var color = d3.hsl(n / self.groups.length * 300, 0.7, 0.725);
-					var color = d3.hsl(300 - name / self.groups.length * 300, 0.7, 0.725);
-
-					return {
-						name: name,
-						color: color.toString(),
-					};
+				/*
+				 * https://stackoverflow.com/questions/1063007/how-to-sort-an-array-of-integers-correctly
+				 */
+				groups.sort(function(a, b) {
+					return b - a;
 				});
+
+				/*
+				 * https://bl.ocks.org/syntagmatic/fda03bb0e99febe49fca0fe63f5ca55e
+				 */
+				//var color = d3.scale.linear()
+				//	.range(["yellow", "purple", "green"])
+				//	.domain([0, groups.length / 2, groups.length])
+				//	.interpolate(d3.interpolateHsl);
+
+				self.colorLookup = groups.reduce(function(colorLookup, group, n) {
+					var color = d3.hsl(n / groups.length * 180, 0.7, 0.725);
+					colorLookup[group] = color.toString();
+					//colorLookup[group] = color(n).toString();
+					return colorLookup;
+				}, {});
 
 				self.force = d3.layout.force()
 					.size([self.width, self.height])
