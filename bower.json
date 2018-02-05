@@ -1,0 +1,21 @@
+{
+  "name": "d3-colony",
+  "version": "0.0.1",
+  "homepage": "https://github.com/renfeng/d3-colony",
+  "authors": [
+    "Frank R. <renfeng.cn@gmail.com>"
+  ],
+  "description": "",
+  "main": "d3-colony.html",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "paper-toast": "PolymerElements/paper-toast#^2.0.0"
+  }
+}
