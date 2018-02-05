@@ -1,6 +1,6 @@
 {
   "name": "d3-colony",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "homepage": "https://github.com/renfeng/d3-colony",
   "authors": [
     "Frank R. <renfeng.cn@gmail.com>"
@@ -16,6 +16,7 @@
     "tests"
   ],
   "dependencies": {
+    "d3": "^2.10.1",
     "paper-toast": "PolymerElements/paper-toast#^2.0.0"
   }
 }
