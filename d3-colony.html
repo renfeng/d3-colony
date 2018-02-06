@@ -9,7 +9,9 @@
 			}
 		</style>
 		<div id="root"></div>
-		<paper-toast id="msgNotFound" text="Not found!"></paper-toast>
+		<!-- TODO color and size legend -->
+		<!-- TODO node count, and other stats? -->
+		<paper-toast id="message" duration="Infinity"></paper-toast>
 	</template>
 	<script>
 		class D3Colony extends Polymer.Element {
@@ -118,7 +120,7 @@
 				//	.interpolate(d3.interpolateHsl);
 
 				self.colorLookup = groups.reduce(function(colorLookup, group, n) {
-					var color = d3.hsl(n / groups.length * 120, 0.7, 0.725);
+					var color = d3.hsl(n / groups.length * 240, 0.7, 0.725);
 					colorLookup[group] = color.toString();
 					//colorLookup[group] = color(n).toString();
 					return colorLookup;
@@ -127,7 +129,9 @@
 				self.force = d3.layout.force()
 					.size([self.width, self.height])
 					.charge(-50 * self.scale)
-					.linkDistance(20 * self.scale)
+					.linkDistance(function(l) {
+						return (20 + l.source.size + l.target.size) * self.scale;
+					})
 					.on('tick', function() {
 						self.link.attr('x1', function(d) { return d.source.x; })
 							.attr('y1', function(d) { return d.source.y; })
@@ -188,6 +192,8 @@
 						//text.attr('transform', 'translate(' + d.x + ',' + d.y + ')')
 						//	.text(d.name)
 						//	.style('display', null)
+						self.$.message.text = d.name;
+						self.$.message.open();
 
 						d3.select(this)
 						  .style('fill', colors.nodes.hover)
@@ -206,6 +212,8 @@
 						//textTarget = false
 						//
 						//text.style('display', 'none')
+						self.$.message.text = "";
+						self.$.message.close();
 
 						d3.select(this)
 						  .style('fill', colors.nodes.method)
@@ -243,7 +251,6 @@
 
 			selectedObserver(newValue, oldValue) {
 				var self = this;
-
 				if (!self.loaded) {
 					return;
 				}
@@ -251,6 +258,8 @@
 					self.internal = false;
 					return;
 				}
+
+				console.log("<d3-colony> selectedObserver: " + oldValue + " => " + newValue);
 
 				if (oldValue) {
 					var node = self.nodeLookup[oldValue];
@@ -264,7 +273,8 @@
 					if (node) {
 						self.toggleFocus(node, true);
 					} else {
-						self.$.msgNotFound.open();
+						self.$.message.text = "Not found: " + newValue;
+						self.$.message.open();
 					}
 				}
 			}
@@ -274,16 +284,18 @@
 
 				if (self.focus === d) {
 					self.force.charge(-50 * self.scale)
-						 .linkDistance(20 * self.scale)
-						 .linkStrength(1)
-						 .start();
+						.linkDistance(function(l) {
+							return (20 + l.source.size + l.target.size) * self.scale;
+						})
+						.linkStrength(1)
+						.start();
 
 					self.node.style('opacity', 1)
 					self.link.style('opacity', function(d) {
 						return d.target.module ? 0.2 : 0.3;
 					});
 
-					console.log("blur: " + d.name);
+					console.log("<d3-colony> toggleFocus: blur on " + d.name);
 					if (!internal) {
 						self.setProperties({
 							selected: undefined,
@@ -299,7 +311,7 @@
 					return;
 				}
 
-				console.log("focus: " + d.name);
+				console.log("<d3-colony> toggleFocus: focus on " + d.name);
 				if (!internal) {
 					self.setProperties({
 						selected: d.name,
@@ -327,7 +339,7 @@
 				self.force.charge(function(o) {
 					return (o.active ? -100 : -5) * self.scale;
 				}).linkDistance(function(l) {
-					return (l.source.active && l.target.active ? 100 : 20) * self.scale;
+					return ((l.source.active && l.target.active ? 100 : 20) + l.source.size + l.target.size) * self.scale;
 				}).linkStrength(function(l) {
 					return (l.source === d || l.target === d ? 1 : 0) * self.scale;
 				}).start();
@@ -338,13 +350,15 @@
 			}
 
 			refresh(width, height) {
-				if (!this.loaded) {
+				var self = this;
+
+				if (!self.loaded) {
 					return;
 				}
 
-				this.force.size([width, height])
+				self.force.size([width, height])
 					.resume();
-				this.vis.attr('width', width)
+				self.vis.attr('width', width)
 					.attr('height', height);
 			};
 
@@ -375,8 +389,9 @@
 			};
 
 			connected(d, o) {
-				var oIndex = this.nodes.indexOf(o);
-				var dIndex = this.nodes.indexOf(d);
+				var self = this;
+				var oIndex = self.nodes.indexOf(o);
+				var dIndex = self.nodes.indexOf(d);
 				return oIndex === dIndex ||
 					(d.children && d.children.indexOf(oIndex) !== -1) ||
 					(o.children && o.children.indexOf(dIndex) !== -1) ||
