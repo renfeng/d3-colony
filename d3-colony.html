@@ -136,8 +136,8 @@ copied from https://github.com/hughsk/colony
 				];
 			}
 
-			ready() {
-				super.ready();
+			connectedCallback() {
+				super.connectedCallback();
 
 				var self = this;
 				self.$.message.fitInto = self.$.container;
@@ -145,6 +145,17 @@ copied from https://github.com/hughsk/colony
 
 			colonyObserver(links, nodes, scale, colors) {
 				var self = this;
+
+				/*
+				 * https://stackoverflow.com/questions/10784018/how-can-i-remove-or-replace-svg-content
+				 */
+				if (self.vis) {
+					self.vis.remove();
+				}
+				self.vis = d3.select(self.$.container)
+					.append('svg')
+					.attr('width', self.width)
+					.attr('height', self.height);
 
 				if (!self.loaded) {
 					return;
@@ -219,15 +230,6 @@ copied from https://github.com/hughsk/colony
 						//			, 'translate(' + textTarget.x + ',' + textTarget.y + ')')
 						//}
 					});
-
-				/*
-				 * https://stackoverflow.com/questions/10784018/how-can-i-remove-or-replace-svg-content
-				 */
-				self.vis = d3.select(self.$.container).select("svg").remove();
-				self.vis = d3.select(self.$.container)
-					.append('svg')
-					.attr('width', self.width)
-					.attr('height', self.height);
 
 				self.force.nodes(nodes)
 					 .links(links)
@@ -428,14 +430,14 @@ copied from https://github.com/hughsk/colony
 			refresh(width, height) {
 				var self = this;
 
+				self.vis.attr('width', width)
+					.attr('height', height);
+
 				if (!self.loaded) {
 					return;
 				}
-
 				self.force.size([width, height])
 					.resume();
-				self.vis.attr('width', width)
-					.attr('height', height);
 			};
 
 			childNodes(d) {
