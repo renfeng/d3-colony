@@ -1,6 +1,6 @@
 {
   "name": "d3-colony",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "homepage": "https://github.com/renfeng/d3-colony",
   "authors": [
     "Frank R. <renfeng.cn@gmail.com>"
@@ -18,5 +18,13 @@
   "dependencies": {
     "d3": "^2.10.1",
     "paper-toast": "PolymerElements/paper-toast#^2.0.0"
+  },
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#1 - 2",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#1 - 2",
+    "paper-button": "PolymerElements/paper-button#1 - 2",
+    "test-fixture": "PolymerElements/test-fixture#^3.0.0-rc.1",
+    "web-component-tester": "^6.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^1.0.0"
   }
 }
