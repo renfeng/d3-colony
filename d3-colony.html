@@ -54,7 +54,7 @@ copied from https://github.com/hughsk/colony
 			static get properties() {
 				return {
 					/**
-					 * An array of nodes
+					 * An array of nodes. See README for the details of the format.
 					 */
 					nodes: {
 						type: Array,
@@ -112,7 +112,7 @@ copied from https://github.com/hughsk/colony
 						},
 					},
 					/**
-					 * Scale of the graph
+					 * The name property of the node in focus.
 					 */
 					selected: {
 						type: String,
@@ -159,6 +159,59 @@ copied from https://github.com/hughsk/colony
 
 				if (!self.loaded) {
 					return;
+				}
+
+				var dependencies = {};
+				for (var link of self.links) {
+					var source = dependencies[link.source];
+					if (!source) {
+						source = {
+							id: link.source,
+							children: [],
+							parents: [],
+						};
+						dependencies[link.source] = source;
+					}
+
+					var target = dependencies[link.target];
+					if (!target) {
+						target = {
+							id: link.target,
+							children: [],
+							parents: [],
+						};
+						dependencies[link.target] = target;
+					}
+
+					target.children.push(source);
+					source.parents.push(target);
+				}
+				var done;
+				do {
+					done = true;
+					for (var d of Object.values(dependencies)) {
+						if (d.descendants) {
+							continue;
+						}
+						if (d.children.length == 0) {
+							d.descendants = 0;
+						} else {
+							var descendants = 0;
+							for (var child of d.children) {
+								if (child.descendants == undefined) {
+									done = false;
+									break;
+								}
+								descendants += child.descendants + 1;
+							}
+							d.descendants = descendants;
+						}
+					}
+				} while (!done);
+				for (var i in self.nodes) {
+					var node = self.nodes[i];
+					var d = dependencies[i];
+					node.group = !d ? 0 : d.descendants;
 				}
 
 				/*
@@ -267,7 +320,7 @@ copied from https://github.com/hughsk/colony
 						//text.attr('transform', 'translate(' + d.x + ',' + d.y + ')')
 						//	.text(d.name)
 						//	.style('display', null)
-						self.$.message.text = d.name + ": group " + d.group + ", size " + d.size;
+						self.$.message.text = d.caption || d.name + ": group " + d.group + ", size " + d.size;
 						self.$.message.open();
 
 						d3.select(this)
