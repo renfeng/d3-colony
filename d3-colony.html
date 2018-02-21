@@ -385,7 +385,7 @@ copied from https://github.com/hughsk/colony
 					return;
 				}
 
-				if (selected >= 0 && selected < self.nodes.length) {
+				if (selected && selected >= 0 && selected < self.nodes.length) {
 					console.log("<d3-colony> selected " + selected);
 
 					var d = self.nodes[selected];
@@ -443,7 +443,7 @@ copied from https://github.com/hughsk/colony
 					return;
 				}
 
-				if (newValue >= 0 && newValue < self.nodes.length) {
+				if (newValue && newValue >= 0 && newValue < self.nodes.length) {
 					var d = self.nodes[newValue];
 					d3.select(self.node[0][newValue])
 						.style('fill', self.colors.nodes.hover);
@@ -459,7 +459,7 @@ copied from https://github.com/hughsk/colony
 						.style('stroke-width', 2);
 				}
 
-				if (oldValue >= 0 && oldValue < self.nodes.length) {
+				if (oldValue && oldValue >= 0 && oldValue < self.nodes.length) {
 					var d = self.nodes[oldValue];
 					d3.select(self.node[0][oldValue])
 					  .style('fill', self.colors.nodes.method);
