@@ -22,6 +22,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 -->
+<link rel="import" href="../iron-resizable-behavior/iron-resizable-behavior.html">
 <link rel="import" href="../paper-toast/paper-toast.html">
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="import-d3.html"/>
@@ -59,7 +60,7 @@ copied from https://github.com/hughsk/colony
 		<!-- TODO node count, and other stats? -->
 	</template>
 	<script>
-		class D3Colony extends Polymer.Element {
+		class D3Colony extends Polymer.mixinBehaviors(Polymer.IronResizableBahavior, Polymer.Element) {
 			static get is() { return "d3-colony"; }
 
 			static get properties() {
@@ -148,15 +149,26 @@ copied from https://github.com/hughsk/colony
 				self.$.message.fitInto = self.$.container;
 
 				Polymer.RenderStatus.afterNextRender(this, function() {
-					console.log("container size");
-					console.log(self.$.container.clientWidth);
-					console.log(self.$.container.clientHeight);
-
-					self.vis.attr('width', self.$.container.clientWidth).attr('height', self.$.container.clientHeight);
-					if (self.loaded) {
-						self.force.size([self.$.container.clientWidth, self.$.container.clientHeight]).resume();
-					}
+					console.log("afterNextRender");
+					self.resize();
 				});
+				self.addEventListener("iron-resize", function() {
+					console.log("iron-resize");
+					self.resize();
+				});
+			}
+
+			resize() {
+				var self = this;
+
+				console.log("container size");
+				console.log(self.$.container.clientWidth);
+				console.log(self.$.container.clientHeight);
+
+				self.vis.attr('width', self.$.container.clientWidth).attr('height', self.$.container.clientHeight);
+				if (self.loaded) {
+					self.force.size([self.$.container.clientWidth, self.$.container.clientHeight]).resume();
+				}
 			}
 
 			colonyObserver(links, nodes, scale, colors) {
@@ -329,27 +341,12 @@ copied from https://github.com/hughsk/colony
 						//	.text(d.name)
 						//	.style('display', null)
 						self.focus = self.nodes.indexOf(d);
-
-						if (d.x < self.$.container.clientWidth / 2) {
-							self.$.message.horizontalAlign = "right";
-						} else {
-							self.$.message.horizontalAlign = "left";
-						}
-						if (d.y < self.$.container.clientHeight / 2) {
-							self.$.message.verticalAlign = "bottom";
-						} else {
-							self.$.message.verticalAlign = "top";
-						}
-						self.$.message.text = d.caption || d.name + ", group " + d.group + ", size " + d.size;
-						self.$.message.open();
 					})
 					.on('mouseout', function(d) {
 						//textTarget = false
 						//
 						//text.style('display', 'none')
 						self.focus = undefined;
-
-						self.$.message.close();
 					})
 					.on('click', function(d) {
 						var i = self.nodes.indexOf(d);
@@ -443,6 +440,22 @@ copied from https://github.com/hughsk/colony
 					return;
 				}
 
+				if (oldValue && oldValue >= 0 && oldValue < self.nodes.length) {
+					var d = self.nodes[oldValue];
+					d3.select(self.node[0][oldValue])
+					  .style('fill', self.colors.nodes.method);
+
+					d3.selectAll(self.childNodes(d))
+						.style('fill', self.colors.nodes.method)
+						.style('stroke', null);
+
+					d3.selectAll(self.parentNodes(d))
+						.style('fill', self.colors.nodes.method)
+						.style('stroke', null);
+
+					self.$.message.close();
+				}
+
 				if (newValue && newValue >= 0 && newValue < self.nodes.length) {
 					var d = self.nodes[newValue];
 					d3.select(self.node[0][newValue])
@@ -457,20 +470,19 @@ copied from https://github.com/hughsk/colony
 						.style('fill', self.colors.nodes.dep)
 						.style('stroke', self.colors.nodes.method)
 						.style('stroke-width', 2);
-				}
 
-				if (oldValue && oldValue >= 0 && oldValue < self.nodes.length) {
-					var d = self.nodes[oldValue];
-					d3.select(self.node[0][oldValue])
-					  .style('fill', self.colors.nodes.method);
-
-					d3.selectAll(self.childNodes(d))
-						.style('fill', self.colors.nodes.method)
-						.style('stroke', null);
-
-					d3.selectAll(self.parentNodes(d))
-						.style('fill', self.colors.nodes.method)
-						.style('stroke', null);
+					if (d.x < self.$.container.clientWidth / 2) {
+						self.$.message.horizontalAlign = "right";
+					} else {
+						self.$.message.horizontalAlign = "left";
+					}
+					if (d.y < self.$.container.clientHeight / 2) {
+						self.$.message.verticalAlign = "bottom";
+					} else {
+						self.$.message.verticalAlign = "top";
+					}
+					self.$.message.text = d.caption || d.name + ", group " + d.group + ", size " + d.size;
+					self.$.message.open();
 				}
 			}
 
