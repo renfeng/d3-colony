@@ -1,6 +1,6 @@
 {
   "name": "d3-colony",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "homepage": "https://github.com/renfeng/d3-colony",
   "authors": [
     "Frank R. <renfeng.cn@gmail.com>"
@@ -17,8 +17,7 @@
   ],
   "dependencies": {
     "d3": "^2.10.1",
-    "iron-resizable-behavior": "PolymerElements/iron-resizable-behavior#^2.1.0",
-    "paper-toast": "PolymerElements/paper-toast#^2.0.0"
+    "iron-resizable-behavior": "PolymerElements/iron-resizable-behavior#^2.1.0"
   },
   "devDependencies": {
     "iron-demo-helpers": "PolymerElements/iron-demo-helpers#1 - 2",

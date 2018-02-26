@@ -23,7 +23,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 -->
 <link rel="import" href="../iron-resizable-behavior/iron-resizable-behavior.html">
-<link rel="import" href="../paper-toast/paper-toast.html">
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="import-d3.html"/>
 
@@ -54,12 +53,15 @@ copied from https://github.com/hughsk/colony
 
 		<!-- TODO replace with :host, and fix the problem of blank display -->
 		<div id="container"></div>
-		<paper-toast id="message" duration="Infinity"></paper-toast>
 
 		<!-- TODO color and size legend -->
 		<!-- TODO node count, and other stats? -->
 	</template>
 	<script>
+		/*
+		 * Simply not working in 2.0 · Issue #31 · PolymerElements/iron-resizable-behavior
+		 * https://github.com/PolymerElements/iron-resizable-behavior/issues/31
+		 */
 		class D3Colony extends Polymer.mixinBehaviors(Polymer.IronResizableBahavior, Polymer.Element) {
 			static get is() { return "d3-colony"; }
 
@@ -145,8 +147,6 @@ copied from https://github.com/hughsk/colony
 				super.connectedCallback();
 
 				var self = this;
-
-				self.$.message.fitInto = self.$.container;
 
 				Polymer.RenderStatus.afterNextRender(this, function() {
 					console.log("afterNextRender");
@@ -452,8 +452,6 @@ copied from https://github.com/hughsk/colony
 					d3.selectAll(self.parentNodes(d))
 						.style('fill', self.colors.nodes.method)
 						.style('stroke', null);
-
-					self.$.message.close();
 				}
 
 				if (newValue && newValue >= 0 && newValue < self.nodes.length) {
@@ -470,19 +468,6 @@ copied from https://github.com/hughsk/colony
 						.style('fill', self.colors.nodes.dep)
 						.style('stroke', self.colors.nodes.method)
 						.style('stroke-width', 2);
-
-					if (d.x < self.$.container.clientWidth / 2) {
-						self.$.message.horizontalAlign = "right";
-					} else {
-						self.$.message.horizontalAlign = "left";
-					}
-					if (d.y < self.$.container.clientHeight / 2) {
-						self.$.message.verticalAlign = "bottom";
-					} else {
-						self.$.message.verticalAlign = "top";
-					}
-					self.$.message.text = d.caption || d.name + ", group " + d.group + ", size " + d.size;
-					self.$.message.open();
 				}
 			}
 
