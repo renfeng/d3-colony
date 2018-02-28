@@ -32,7 +32,7 @@ copied from https://github.com/hughsk/colony
 
 @group D3 Elements
 @element d3-colony
-@demo demo/index.html
+@demo
 @hero hero.svg
 -->
 
@@ -58,11 +58,12 @@ copied from https://github.com/hughsk/colony
 		<!-- TODO node count, and other stats? -->
 	</template>
 	<script>
-		/*
-		 * Simply not working in 2.0 · Issue #31 · PolymerElements/iron-resizable-behavior
-		 * https://github.com/PolymerElements/iron-resizable-behavior/issues/31
-		 */
-		class D3Colony extends Polymer.mixinBehaviors(Polymer.IronResizableBahavior, Polymer.Element) {
+		class D3Colony extends Polymer.mixinBehaviors([Polymer.IronResizableBahavior], Polymer.Element) {
+			/*
+			 * TODO Simply not working in 2.0 · Issue #31 · PolymerElements/iron-resizable-behavior
+			 * https://github.com/PolymerElements/iron-resizable-behavior/issues/31
+			 */
+
 			static get is() { return "d3-colony"; }
 
 			static get properties() {
@@ -91,7 +92,7 @@ copied from https://github.com/hughsk/colony
 					/**
 					 * Definition of node colors
 					 */
-					colors: {
+					_colors: {
 						type: Object,
 						value: function() {
 							var self = this;
@@ -124,7 +125,7 @@ copied from https://github.com/hughsk/colony
 					focus: {
 						type: Number,
 						notify: true,
-						observer: "focusObserver",
+						observer: "_focusObserver",
 					},
 					/**
 					 * Indicator of whether it is ready for render the graph
@@ -138,27 +139,27 @@ copied from https://github.com/hughsk/colony
 
 			static get observers() {
 				return [
-					"colonyObserver(links, nodes, scale, colors)",
-					"selectedObserver(selected)",
+					"_colonyObserver(links, nodes, scale, _colors)",
+					"_selectedObserver(selected)",
 				];
 			}
 
-			connectedCallback() {
-				super.connectedCallback();
+			ready() {
+				super.ready();
 
 				var self = this;
 
 				Polymer.RenderStatus.afterNextRender(this, function() {
 					console.log("afterNextRender");
-					self.resize();
+					self._resize();
 				});
 				self.addEventListener("iron-resize", function() {
 					console.log("iron-resize");
-					self.resize();
+					self._resize();
 				});
 			}
 
-			resize() {
+			_resize() {
 				var self = this;
 
 				console.log("container size");
@@ -171,7 +172,7 @@ copied from https://github.com/hughsk/colony
 				}
 			}
 
-			colonyObserver(links, nodes, scale, colors) {
+			_colonyObserver(links, nodes, scale, colors) {
 				var self = this;
 
 				/*
@@ -297,20 +298,14 @@ copied from https://github.com/hughsk/colony
 
 						self.node.attr('cx', function(d) { return d.x; })
 							.attr('cy', function(d) { return d.y; })
-
-						//if (textTarget) {
-						//	text.attr('transform'
-						//			, 'translate(' + textTarget.x + ',' + textTarget.y + ')')
-						//}
 					});
 
-				self.force.nodes(nodes)
-					 .links(links)
-					 .start();
+				self.force.nodes(nodes).links(links).start();
 
 				self.link = self.vis.selectAll('line.link').data(links);
-				self.node = self.vis.selectAll('circle.node')
-					.data(nodes, function(d) { return d.filename });
+				self.node = self.vis.selectAll('circle.node').data(nodes, function(d) {
+					return "TODO remove";
+				});
 
 				self.link.enter()
 					.insert('line', '.node')
@@ -335,17 +330,9 @@ copied from https://github.com/hughsk/colony
 					.style('fill', colors.nodes.method)
 					.call(self.force.drag)
 					.on('mouseover', function(d) {
-						//textTarget = d
-						//
-						//text.attr('transform', 'translate(' + d.x + ',' + d.y + ')')
-						//	.text(d.name)
-						//	.style('display', null)
 						self.focus = self.nodes.indexOf(d);
 					})
 					.on('mouseout', function(d) {
-						//textTarget = false
-						//
-						//text.style('display', 'none')
 						self.focus = undefined;
 					})
 					.on('click', function(d) {
@@ -357,26 +344,10 @@ copied from https://github.com/hughsk/colony
 						}
 					});
 
-				//text = self.vis.selectAll('.nodetext')
-				//	.data([
-				//		  [-1.5,  1.5,  1] // "Shadows"
-				//		, [ 1.5,  1.5,  1]
-				//		, [-1.5, -1.5,  1]
-				//		, [ 1.5, -1.5,  1]
-				//		, [ 0.0,  0.0,  0] // Actual Text
-				//	])
-				//	.enter()
-				//	.insert('text', ':last-child')
-				//	.attr('class', 'nodetext')
-				//	.classed('shadow', function(d) { return d[2] })
-				//	.attr('dy', function(d) { return d[0] - 10 })
-				//	.attr('dx', function(d) { return d[1] })
-				//	.attr('text-anchor', 'middle');
-
-				self.selectedObserver(self.selected);
+				self._selectedObserver(self.selected);
 			}
 
-			selectedObserver(selected) {
+			_selectedObserver(selected) {
 				var self = this;
 				if (!self.loaded) {
 					return;
@@ -387,7 +358,7 @@ copied from https://github.com/hughsk/colony
 
 					var d = self.nodes[selected];
 					self.node.style('opacity', function(o) {
-						o.active = self.connected(d, o);
+						o.active = self._connected(d, o);
 						return o.active ? 1 : 0.2;
 					});
 
@@ -402,17 +373,6 @@ copied from https://github.com/hughsk/colony
 					self.link.style('opacity', function(l, i) {
 						return l.source.active && l.target.active ? 0.2 : 0.02;
 					});
-
-					//d3.xhr('./files/' + d.filename + '.html', function(res) {
-					//	if (!res) return
-					//
-					//	d3.select('#readme-contents')
-					//		.html(res.responseText)
-					//		.classed('showing-code', true)
-					//
-					//	document.getElementById('readme')
-					//			.scrollTop = 0
-					//});
 				} else {
 					console.log("<d3-colony> unselected");
 
@@ -427,14 +387,10 @@ copied from https://github.com/hughsk/colony
 					self.link.style('opacity', function(d) {
 						return d.target.module ? 0.2 : 0.3;
 					});
-
-					//d3.select('#readme-contents')
-					//	.html(readme)
-					//	.classed('showing-code', false);
 				}
 			}
 
-			focusObserver(newValue, oldValue) {
+			_focusObserver(newValue, oldValue) {
 				var self = this;
 				if (!self.loaded) {
 					return;
@@ -443,35 +399,35 @@ copied from https://github.com/hughsk/colony
 				if (oldValue && oldValue >= 0 && oldValue < self.nodes.length) {
 					var d = self.nodes[oldValue];
 					d3.select(self.node[0][oldValue])
-					  .style('fill', self.colors.nodes.method);
+					  .style('fill', self._colors.nodes.method);
 
-					d3.selectAll(self.childNodes(d))
-						.style('fill', self.colors.nodes.method)
+					d3.selectAll(self._childNodes(d))
+						.style('fill', self._colors.nodes.method)
 						.style('stroke', null);
 
-					d3.selectAll(self.parentNodes(d))
-						.style('fill', self.colors.nodes.method)
+					d3.selectAll(self._parentNodes(d))
+						.style('fill', self._colors.nodes.method)
 						.style('stroke', null);
 				}
 
 				if (newValue && newValue >= 0 && newValue < self.nodes.length) {
 					var d = self.nodes[newValue];
 					d3.select(self.node[0][newValue])
-						.style('fill', self.colors.nodes.hover);
+						.style('fill', self._colors.nodes.hover);
 
-					d3.selectAll(self.childNodes(d))
-						.style('fill', self.colors.nodes.hover)
-						.style('stroke', self.colors.nodes.method)
+					d3.selectAll(self._childNodes(d))
+						.style('fill', self._colors.nodes.hover)
+						.style('stroke', self._colors.nodes.method)
 						.style('stroke-width', 2);
 
-					d3.selectAll(self.parentNodes(d))
-						.style('fill', self.colors.nodes.dep)
-						.style('stroke', self.colors.nodes.method)
+					d3.selectAll(self._parentNodes(d))
+						.style('fill', self._colors.nodes.dep)
+						.style('stroke', self._colors.nodes.method)
 						.style('stroke-width', 2);
 				}
 			}
 
-			childNodes(d) {
+			_childNodes(d) {
 				if (!d.children) return [];
 
 				var self = this;
@@ -484,7 +440,7 @@ copied from https://github.com/hughsk/colony
 					});
 			};
 
-			parentNodes(d) {
+			_parentNodes(d) {
 				if (!d.parents) return []
 
 				var self = this;
@@ -497,7 +453,7 @@ copied from https://github.com/hughsk/colony
 					})
 			};
 
-			connected(d, o) {
+			_connected(d, o) {
 				var self = this;
 				var oIndex = self.nodes.indexOf(o);
 				var dIndex = self.nodes.indexOf(d);

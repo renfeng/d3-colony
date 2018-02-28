@@ -10,7 +10,6 @@
   <template>
     <link rel="import" href="d3-colony.html">
     <link rel="import" href="../paper-input/paper-input.html">
-    <link rel="import" href="../paper-toast/paper-toast.html">
     <next-code-block></next-code-block>
   </template>
 </custom-element-demo>
