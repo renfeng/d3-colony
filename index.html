@@ -3,8 +3,23 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-	<script src="/bower_components/webcomponentsjs/webcomponents-lite.js"></script>
-	<link rel="import" href="/bower_components/iron-component-page/iron-component-page.html">
+	<script>
+		var base;
+		if (location.href.endsWith("components/d3-colony/")) {
+			base = "../";
+		} else {
+			base = "bower_components";
+		}
+
+		var script = document.createElement("script");
+		script.setAttribute("src", base + "webcomponentsjs/webcomponents-lite.js");
+		document.head.appendChild(script);
+
+		var link = document.createElement("link");
+		link.setAttribute("rel", "import");
+		link.setAttribute("href", base + "iron-component-page/iron-component-page.html");
+		document.head.appendChild(link);
+	</script>
 </head>
 <body>
   <iron-component-page></iron-component-page>
