@@ -6,18 +6,18 @@
 	<script>
 		var base;
 		if (location.href.endsWith("components/d3-colony/")) {
-			base = "../";
+			base = "..";
 		} else {
 			base = "bower_components";
 		}
 
 		var script = document.createElement("script");
-		script.setAttribute("src", base + "webcomponentsjs/webcomponents-lite.js");
+		script.setAttribute("src", base + "/webcomponentsjs/webcomponents-lite.js");
 		document.head.appendChild(script);
 
 		var link = document.createElement("link");
 		link.setAttribute("rel", "import");
-		link.setAttribute("href", base + "iron-component-page/iron-component-page.html");
+		link.setAttribute("href", base + "/iron-component-page/iron-component-page.html");
 		document.head.appendChild(link);
 	</script>
 </head>
