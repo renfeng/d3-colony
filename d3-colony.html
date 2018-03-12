@@ -353,7 +353,7 @@ copied from https://github.com/hughsk/colony
 					return;
 				}
 
-				if (selected && selected >= 0 && selected < self.nodes.length) {
+				if (selected != undefined && selected >= 0 && selected < self.nodes.length) {
 					console.log("<d3-colony> selected " + selected);
 
 					var d = self.nodes[selected];
