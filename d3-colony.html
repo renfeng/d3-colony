@@ -59,11 +59,6 @@ copied from https://github.com/hughsk/colony
 	</template>
 	<script>
 		class D3Colony extends Polymer.mixinBehaviors([Polymer.IronResizableBahavior], Polymer.Element) {
-			/*
-			 * TODO Simply not working in 2.0 · Issue #31 · PolymerElements/iron-resizable-behavior
-			 * https://github.com/PolymerElements/iron-resizable-behavior/issues/31
-			 */
-
 			static get is() { return "d3-colony"; }
 
 			static get properties() {
@@ -142,6 +137,13 @@ copied from https://github.com/hughsk/colony
 					"_colonyObserver(links, nodes, scale, _colors)",
 					"_selectedObserver(selected)",
 				];
+			}
+
+			connectedCallback() {
+				if (super.connectedCallback) {
+					super.connectedCallback();
+				}
+				this.addEventListener('iron-resize', this._resize);
 			}
 
 			ready() {
